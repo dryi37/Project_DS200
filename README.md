@@ -53,7 +53,7 @@ The results demonstrate that combining dual-encoder features with BGHR refinemen
 ### Clone Repository
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/dryi37/Project_DS200
 cd SAM2_Polyp
 ```
 

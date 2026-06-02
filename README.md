@@ -49,13 +49,6 @@ wget -P checkpoints/ \
 https://dl.fbaipublicfiles.com/segment_anything_2/092824/sam2.1_hiera_large.pt
 ```
 
-Expected structure:
-
-```text
-checkpoints/
-└── sam2.1_hiera_large.pt
-```
-
 ---
 
 ## Dataset Preparation
@@ -120,23 +113,6 @@ python train.py \
   --batch_size 12 \
   --lr 1e-4
 ```
-
----
-
-## Checkpoints
-
-```text
-checkpoints/
-├── sam2.1_hiera_large.pt
-├── sam2unet_conv_bghr/
-    ├── best.pt
-    └── last.pt
-```
-
-Where:
-
-* `best.pt` = highest validation Dice score
-* `last.pt` = latest training checkpoint
 
 ---
 

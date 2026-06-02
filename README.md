@@ -1,50 +1,12 @@
 # SAM2-DEB-UNet: Polyp Segmentation with SAM2 and Boundary-Guided Refinement
 
-PyTorch implementation of polyp segmentation models based on a frozen SAM2 Hiera-L image encoder, ConvNeXt-V2 Tiny auxiliary encoder, and Boundary-Guided High-Resolution (BGHR) refinement modules.
+PyTorch implementation of a dual-encoder polyp segmentation framework built upon a frozen SAM2 Hiera-L backbone and a ConvNeXt-V2 Tiny auxiliary encoder. The proposed architecture incorporates Boundary-Guided High-Resolution (BGHR) refinement to improve boundary localization and segmentation accuracy on challenging polyp datasets.
 
-The repository provides three model variants for benchmarking the impact of dual-encoder feature fusion and boundary-aware supervision on gastrointestinal polyp segmentation.
+## Architecture
 
----
-
-## Overview
-
-### Baseline Architecture
-
-* Frozen SAM2 Hiera-L image encoder
-* ConvNeXt-V2 Tiny auxiliary encoder
-* U-Net style decoder
-* BCE + Dice loss
-
-### BGHR Enhancement
-
-Additional components:
-
-* Boundary-Guided High-Resolution refinement
-* Edge prediction branch
-* Deep supervision
-* Boundary-aware optimization
-
----
-
-## Model Variants
-
-| Model                | Description                                     | Loss Function   |
-| -------------------- | ----------------------------------------------- | --------------- |
-| `sam2unet_conv`      | SAM2 + ConvNeXt dual encoder with U-Net decoder | BCE + Dice      |
-| `sam2unet_conv_bghr` | Dual encoder + BGHR refinement                  | Multi-task loss |
-| `sam2unet_bghr`      | Standalone BGHR architecture with RFB modules   | Structure loss  |
-
----
-
-## Ablation Study (mDice)
-
-| Dual Encoder | BGHR | Kvasir    | ClinicDB  | ColonDB   | CVC-300   | ETIS      | Avg       |
-| ------------ | ---- | --------- | --------- | --------- | --------- | --------- | --------- |
-|              |      | 0.915     | 0.888     | 0.800     | 0.887     | 0.782     | 0.854     |
-|              |  ✓   | 0.923     | 0.905     | 0.790     | 0.893     | 0.806     | 0.863     |
-| ✓            | ✓    | **0.935** | **0.916** | **0.811** | **0.876** | **0.828** | **0.873** |
-
-The results demonstrate that combining dual-encoder features with BGHR refinement consistently improves segmentation performance across all benchmark datasets.
+<p align="center">
+  <img src="assets/architecture.png" width="1000">
+</p>
 
 ---
 
@@ -172,21 +134,6 @@ data/
 
 ## Training
 
-### 1. Baseline Model
-
-```bash
-python train.py \
-  --model sam2unet_conv \
-  --train_dir data/TrainDataset \
-  --val_dir data/TestDataset/Kvasir \
-  --sam2_ckpt checkpoints/sam2.1_hiera_large.pt \
-  --epochs 50 \
-  --batch_size 12 \
-  --lr 1e-4
-```
-
-### 2. Dual Encoder + BGHR
-
 ```bash
 python train.py \
   --model sam2unet_conv_bghr \
@@ -199,21 +146,6 @@ python train.py \
   --lr 1e-4
 ```
 
-### 3. BGHR Model
-
-```bash
-python train.py \
-  --model sam2unet_bghr \
-  --train_dir data/TrainDataset \
-  --val_dir data/TestDataset/Kvasir \
-  --sam2_ckpt checkpoints/sam2.1_hiera_large.pt \
-  --epochs 50 \
-  --batch_size 12 \
-  --lr 1e-4 \
-  --multi_scale \
-  --trainsize 352
-```
-
 ---
 
 ## Checkpoints
@@ -223,16 +155,7 @@ Checkpoints are automatically saved during training:
 ```text
 checkpoints/
 ├── sam2.1_hiera_large.pt
-│
-├── sam2unet_conv/
-│   ├── best.pt
-│   └── last.pt
-│
 ├── sam2unet_conv_bghr/
-│   ├── best.pt
-│   └── last.pt
-│
-└── sam2unet_bghr/
     ├── best.pt
     └── last.pt
 ```
@@ -251,7 +174,7 @@ Where:
 ```bash
 python test.py \
   --model sam2unet_bghr \
-  --checkpoint checkpoints/sam2unet_bghr/best.pt \
+  --checkpoint checkpoints/sam2unet_conv_bghr/best.pt \
   --test_root data/TestDataset \
   --sam2_ckpt checkpoints/sam2.1_hiera_large.pt
 ```
@@ -268,20 +191,21 @@ python test.py \
 
 ---
 
-## Comparison with State-of-the-Art Methods
+## Results
 
-### Quantitative Comparison (mDice / mIoU)
+### Ablation Study
 
-| Method | Kvasir | ClinicDB | ColonDB | CVC-300 | ETIS | Avg. |
-|---------|---------|---------|---------|---------|---------|---------|
-| PraNet | 0.898 / 0.840 | 0.899 / 0.849 | 0.709 / 0.640 | 0.871 / 0.797 | 0.628 / 0.567 | 0.801 / 0.739 |
-| SANet | 0.904 / 0.847 | 0.916 / 0.859 | 0.752 / 0.669 | 0.888 / 0.815 | 0.750 / 0.654 | 0.842 / 0.769 |
-| CaraNet | 0.913 / 0.859 | 0.921 / 0.876 | 0.775 / 0.700 | 0.902 / 0.836 | 0.740 / 0.660 | 0.850 / 0.786 |
-| CFA-Net | 0.915 / 0.861 | 0.933 / 0.883 | 0.743 / 0.665 | 0.893 / 0.827 | 0.732 / 0.655 | 0.843 / 0.778 |
-| SAM2-UNeXt | 0.928 / 0.879 | 0.907 / 0.856 | 0.808 / 0.730 | 0.894 / 0.827 | 0.796 / 0.723 | 0.867 / 0.803 |
-| **Ours** | **0.935 / 0.891** | **0.916 / 0.868** | **0.811 / 0.733** | **0.876 / 0.814** | **0.828 / 0.756** | **0.873 / 0.812** |
+<p align="center">
+  <img src="assets/ablation_study.png" width="800">
+</p>
 
-Our model achieves the best average performance among all compared methods and obtains the highest Dice score on Kvasir, ColonDB, and ETIS datasets, demonstrating the effectiveness of combining dual-encoder feature extraction with BGHR refinement.
+### Comparison with State-of-the-Art Methods
+
+<p align="center">
+  <img src="assets/sota_comparison.png" width="900">
+</p>
+
+Our method achieves the best average performance (0.873 mDice / 0.812 mIoU) and demonstrates consistent improvements across challenging datasets such as ColonDB and ETIS.
 
 ## Project Structure
 
@@ -304,6 +228,18 @@ SAM2_Polyp/
 
 ---
 
-## License
+## Acknowledgements
 
-This project is intended for research and educational purposes.
+```bibtex
+@article{xiong2026sam2,
+  title={Sam2-unet: Segment anything 2 makes strong encoder for natural and medical image segmentation},
+  author={Xiong, Xinyu and Wu, Zihuang and Tan, Shuangyi and Li, Wenxue and Tang, Feilong and Chen, Ying and Li, Siying and Ma, Jie and Li, Guanbin},
+  journal={Visual Intelligence},
+  volume={4},
+  number={1},
+  pages={2},
+  year={2026},
+  publisher={Springer}
+}
+```
+

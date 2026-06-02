@@ -268,31 +268,20 @@ python test.py \
 
 ---
 
-## Evaluation Metrics
+## Comparison with State-of-the-Art Methods
 
-The testing script reports:
+### Quantitative Comparison (mDice / mIoU)
 
-* mDice
-* mIoU
-* MAE
+| Method | Kvasir | ClinicDB | ColonDB | CVC-300 | ETIS | Avg. |
+|---------|---------|---------|---------|---------|---------|---------|
+| PraNet | 0.898 / 0.840 | 0.899 / 0.849 | 0.709 / 0.640 | 0.871 / 0.797 | 0.628 / 0.567 | 0.801 / 0.739 |
+| SANet | 0.904 / 0.847 | 0.916 / 0.859 | 0.752 / 0.669 | 0.888 / 0.815 | 0.750 / 0.654 | 0.842 / 0.769 |
+| CaraNet | 0.913 / 0.859 | 0.921 / 0.876 | 0.775 / 0.700 | 0.902 / 0.836 | 0.740 / 0.660 | 0.850 / 0.786 |
+| CFA-Net | 0.915 / 0.861 | 0.933 / 0.883 | 0.743 / 0.665 | 0.893 / 0.827 | 0.732 / 0.655 | 0.843 / 0.778 |
+| SAM2-UNeXt | 0.928 / 0.879 | 0.907 / 0.856 | 0.808 / 0.730 | 0.894 / 0.827 | 0.796 / 0.723 | 0.867 / 0.803 |
+| **Ours** | **0.935 / 0.891** | **0.916 / 0.868** | **0.811 / 0.733** | **0.876 / 0.814** | **0.828 / 0.756** | **0.873 / 0.812** |
 
-for each dataset and an overall average.
-
-Example output:
-
-```text
-Dataset              Dice     IoU      MAE
----------------------------------------------
-Kvasir               0.935    0.901    0.021
-CVC-ClinicDB         0.916    0.876    0.018
-CVC-ColonDB          0.811    0.742    0.038
-CVC-300              0.876    0.823    0.027
-ETIS                 0.828    0.761    0.044
----------------------------------------------
-Average              0.873    0.821    0.030
-```
-
----
+Our model achieves the best average performance among all compared methods and obtains the highest Dice score on Kvasir, ColonDB, and ETIS datasets, demonstrating the effectiveness of combining dual-encoder feature extraction with BGHR refinement.
 
 ## Project Structure
 

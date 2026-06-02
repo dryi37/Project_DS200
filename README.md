@@ -105,31 +105,6 @@ unzip TrainDataset.zip
 unzip TestDataset.zip
 ```
 
-Optional:
-
-```bash
-rm TrainDataset.zip TestDataset.zip
-```
-
-Final structure:
-
-```text
-data/
-├── TrainDataset/
-│   ├── images/
-│   └── masks/
-│
-└── TestDataset/
-    ├── Kvasir/
-    │   ├── images/
-    │   └── masks/
-    │
-    ├── CVC-ClinicDB/
-    ├── CVC-ColonDB/
-    ├── CVC-300/
-    └── ETIS-LaribPolypDB/
-```
-
 ---
 
 ## Training
@@ -149,8 +124,6 @@ python train.py \
 ---
 
 ## Checkpoints
-
-Checkpoints are automatically saved during training:
 
 ```text
 checkpoints/

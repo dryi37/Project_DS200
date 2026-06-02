@@ -181,7 +181,7 @@ python train.py \
   --val_dir data/TestDataset/Kvasir \
   --sam2_ckpt checkpoints/sam2.1_hiera_large.pt \
   --epochs 50 \
-  --batch_size 4 \
+  --batch_size 12 \
   --lr 1e-4
 ```
 
@@ -195,7 +195,7 @@ python train.py \
   --sam2_ckpt checkpoints/sam2.1_hiera_large.pt \
   --init_from checkpoints/sam2unet_conv/best.pt \
   --epochs 50 \
-  --batch_size 4 \
+  --batch_size 12 \
   --lr 1e-4
 ```
 
@@ -208,7 +208,7 @@ python train.py \
   --val_dir data/TestDataset/Kvasir \
   --sam2_ckpt checkpoints/sam2.1_hiera_large.pt \
   --epochs 50 \
-  --batch_size 4 \
+  --batch_size 12 \
   --lr 1e-4 \
   --multi_scale \
   --trainsize 352

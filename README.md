@@ -15,8 +15,8 @@ PyTorch implementation of a dual-encoder polyp segmentation framework built upon
 ### Clone Repository
 
 ```bash
-git clone https://github.com/dryi37/Project_DS200
-cd SAM2_Polyp
+git clone https://github.com/dryi37/SAM2-DEB-UNet.git
+cd SAM2-DEB-UNet
 ```
 
 ### Install Dependencies
@@ -156,24 +156,59 @@ python test.py \
 
 Our method achieves the best average performance (0.873 mDice / 0.812 mIoU) and demonstrates consistent improvements across challenging datasets such as ColonDB and ETIS.
 
-## Project Structure
+## Deployment
 
-```text
-SAM2_Polyp/
-│
-├── train.py
-├── test.py
-├── README.md
-│
-├── models/
-│   ├── sam2unet_conv.py
-│   ├── sam2unet_conv_bghr.py
-│   └── sam2unet_bghr.py
-│
-├── datasets/
-├── checkpoints/
-└── data/
+The trained model can be exported to ONNX and deployed with ONNX Runtime, FastAPI, and Docker for efficient production inference.
+
+### Export to ONNX
+
+```bash
+cd deploy
+
+python export_onnx.py \
+    --checkpoint ../checkpoints/sam2unet_conv_bghr/best.pt \
+    --sam2_ckpt ../checkpoints/sam2.1_hiera_large.pt \
+    --output sam2unet_conv_bghr.onnx \
+    --opset 19
 ```
+
+The export script automatically verifies numerical consistency between the PyTorch and ONNX models to ensure the exported model produces consistent predictions.
+
+### Run the API Server
+
+```bash
+cd deploy
+
+pip install -r requirements-deploy.txt
+
+uvicorn app:app --host 0.0.0.0 --port 8000
+```
+
+The API automatically uses the CUDA Execution Provider when available and falls back to CPU otherwise.
+
+### Docker
+
+Build the Docker image:
+
+```bash
+cd deploy
+
+docker build -t sam2-polyp-api .
+```
+
+Run the container:
+
+```bash
+docker run -p 8000:8000 sam2-polyp-api
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+| :----: | :------: | ----------- |
+| GET | `/health` | Check API status and execution provider |
+| POST | `/predict` | Return the predicted segmentation mask as a PNG image |
+| POST | `/predict/json` | Return the segmentation mask (Base64) together with inference statistics |
 
 ---
 

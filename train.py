@@ -3,6 +3,8 @@ import os
 import random
 import time
 from pathlib import Path
+import mlflow
+import mlflow.pytorch
 
 import numpy as np
 import torch
@@ -367,6 +369,15 @@ def resume_checkpoint(path, model, optimizer, scheduler, scaler, device):
 
 def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    mlflow.set_tracking_uri(
+        os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    )
+
+    mlflow.set_experiment(args.experiment_name)
+    run_name = args.run_name if args.run_name else args.model
+    mlflow.start_run(run_name=run_name)
+
     print(f"Model : {args.model}")
     print(f"Device: {device}")
     if device.type == "cuda":
@@ -381,8 +392,31 @@ def train(args):
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=args.lr * 1e-2)
     scaler = GradScaler()
 
+    mlflow.log_params({
+        "model": args.model,
+        "epochs": args.epochs,
+        "batch_size": args.batch_size,
+        "learning_rate": args.lr,
+        "weight_decay": args.weight_decay,
+
+        "optimizer": "AdamW",
+        "scheduler": "CosineAnnealingLR",
+
+        "train_dir": args.train_dir,
+        "val_dir": args.val_dir,
+
+        "trainsize": args.trainsize,
+
+        "lambda_edge": args.lambda_edge,
+        "lambda_boundary": args.lambda_boundary,
+        "lambda_coarse": args.lambda_coarse,
+    })
+
     save_dir = Path(args.save_dir) / args.model
     save_dir.mkdir(parents=True, exist_ok=True)
+
+    mlflow.log_artifact("train.py", artifact_path="source")
+    mlflow.log_artifact("dataset.py", artifact_path="source")
 
     start_epoch, best_dice = 1, 0.0
     if args.resume and Path(args.resume).exists() and args.model != "sam2unet_bghr":
@@ -400,18 +434,52 @@ def train(args):
 
         # ----- val -----
         val_loss, val_dice = validate(model, val_loader, device, epoch, args)
+
+        mlflow.log_metric("train_loss", train_loss, step=epoch)
+        mlflow.log_metric("val_loss", val_loss, step=epoch)
+        mlflow.log_metric("val_dice", val_dice, step=epoch)
+        mlflow.log_metric("learning_rate", lr_now, step=epoch)
+
         print(f"Epoch {epoch:03d}/{args.epochs:03d}  "
               f"| train={train_loss:.4f} | val={val_loss:.4f} "
               f"| dice={val_dice:.4f} | lr={lr_now:.2e} | {elapsed:.0f}s")
         if device.type == "cuda":
             print(f"          VRAM: {torch.cuda.memory_allocated()/1e9:.1f} GB")
+            mlflow.log_metric(
+                "gpu_memory_gb",
+                torch.cuda.memory_allocated() / 1e9,
+                step=epoch,
+            )
         save_checkpoint(save_dir / "last.pt", epoch, model, optimizer,
                         scheduler, scaler, best_dice, val_dice)
+
+        mlflow.log_artifact(
+            str(save_dir / "last.pt"),
+            artifact_path="checkpoints",
+        )
+
         if val_dice > best_dice:
             best_dice = val_dice
             save_checkpoint(save_dir / "best.pt", epoch, model, optimizer,
                             scheduler, scaler, best_dice, val_dice)
+
+            mlflow.log_artifact(
+                str(save_dir / "best.pt"),
+                artifact_path="checkpoints",
+            )
+            mlflow.pytorch.log_model(
+                pytorch_model=model,
+                name="model",
+            )
+
             print(f"          ★ New best Dice: {best_dice:.4f}")
+
+    mlflow.log_metric(
+        "best_val_dice",
+        best_dice,
+    )
+
+    mlflow.end_run()
 
     print(f"\nDone. Best val Dice = {best_dice:.4f}")
 
@@ -457,6 +525,10 @@ def parse_args():
     p.add_argument("--lambda_edge",      type=float, default=0.30)
     p.add_argument("--lambda_boundary",  type=float, default=0.50)
     p.add_argument("--lambda_coarse",    type=float, default=0.50)
+
+    p.add_argument("--experiment_name", type=str, default="SAM2-DEB-UNet")
+
+    p.add_argument("--run_name", type=str, default=None)
 
     return p.parse_args()
 

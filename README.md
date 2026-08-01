@@ -19,17 +19,22 @@ git clone https://github.com/dryi37/SAM2-DEB-UNet.git
 cd SAM2-DEB-UNet
 ```
 
+### Create Virtual Environment (Optional)
+
+```bash
+python -m venv .venv
+
+# Linux / macOS
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
 ### Install Dependencies
 
 ```bash
-pip install torch torchvision
-pip install timm albumentations opencv-python numpy pillow tqdm matplotlib gdown
-```
-
-### Install SAM2
-
-```bash
-pip install git+https://github.com/facebookresearch/segment-anything-2.git
+pip install -r requirements.txt
 ```
 
 ---
@@ -113,6 +118,34 @@ python train.py \
   --batch_size 12 \
   --lr 1e-4
 ```
+
+---
+
+## Experiment Tracking (MLflow)
+
+This project supports experiment tracking with MLflow.
+
+### Start MLflow Server
+
+```bash
+docker compose up -d
+```
+
+Open:
+
+```
+http://localhost:5000
+```
+
+During training, the following information is automatically logged:
+
+- Hyperparameters
+- Training / Validation Loss
+- Validation Dice Score
+- Learning Rate
+- GPU Memory Usage
+- Best and Last Checkpoints
+- Trained PyTorch Model
 
 ---
 
